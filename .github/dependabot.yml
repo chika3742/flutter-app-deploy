@@ -1,0 +1,10 @@
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      timezone: Asia/Tokyo
+    labels:
+      - "deps"
+    commit-message:
+      prefix: "deps(workflow)"

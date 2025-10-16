@@ -1,0 +1,117 @@
+on:
+  workflow_call:
+    inputs:
+      build-number:
+        description: Build number for build
+        type: string
+        required: true
+      build-name:
+        description: Build name for build
+        type: string
+        required: true
+      keystore-file:
+        description: Path to the keystore file
+        type: string
+        default: android/main.keystore
+      key-properties-file:
+        description: Path to the .properties file for signing config
+        type: string
+        default: android/key.properties
+      java-version:
+        description: Java version for build
+        type: string
+        default: '17'
+      build-options:
+        description: Additional options for `flutter build` command
+        type: string
+        default: ''
+      wif-provider:
+        description: Workload Identity Federation Provider
+        type: string
+        required: true
+      wif-service-account:
+        description: Workload Identity Federation Service Account
+        type: string
+        required: true
+      wif-audience:
+        description: Workload Identity Federation Audience
+        type: string
+    secrets:
+      keystore_base64:
+        description: Base64 encoded keystore file
+        required: true
+      key_properties_base64:
+        description: Base64 encoded .properties file for signing config
+        required: true
+      google_services_json_base64:
+        description: Base64 encoded google-services.json
+        required: false
+
+jobs:
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Init Flutter SDK
+        uses: chika3742/setup-fvm@v3
+
+      - uses: actions/setup-java@v5 # for Android build
+        with:
+          distribution: zulu
+          java-version: ${{ inputs.java-version }}
+
+      - name: Import Secrets
+        run: |
+          base64 -d <<< "${{ secrets.android_keystore_base64 }}" > ./${{ inputs.keystore-file }}
+          base64 -d <<< "${{ secrets.android_key_properties_base64 }}" > ./${{ inputs.key_properties_file }}
+          if [ -n "${{ secrets.google_services_json_base64 }}" ]; then
+            base64 -d <<< "${{ secrets.google_services_json_base64 }}" > ./android/app/google-services.json
+          fi
+
+      - name: Build
+        run: |
+          fvm flutter build appbundle\
+            --build-number ${{ inputs.build-number }}\
+            --build-name ${{ inputs.build-name }}\
+            ${{ inputs.build-options }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            ./build/app/outputs/bundle/release/app-release.aab
+            ./build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/**
+            ./build/app/outputs/mapping/release/mapping.txt
+
+      - name: Delete Secrets
+        if: always()
+        run: |
+          rm -f "./${{ inputs.keystore-file }}" \
+                "./${{ inputs.key_properties_file }}"
+
+  deploy-android:
+    name: Deploy Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v5
+
+      - uses: ruby/setup-ruby@v1 # for fastlane
+
+      - name: Install Fastlane
+        run: bundle install
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ inputs.wif-provider }}
+          service_account: ${{ inputs.wif-service-account }}
+          audience: ${{ inputs.wif-audience }}
+
+      - name: Deploy to Play Store
+        working-directory: android
+        run: bundle exec fastlane upload

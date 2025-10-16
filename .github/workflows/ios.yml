@@ -1,0 +1,125 @@
+on:
+  workflow_call:
+    inputs:
+      build-number:
+        description: Build number for build
+        type: string
+        required: true
+      build-name:
+        description: Build name for build
+        type: string
+        required: true
+      build-options:
+        description: Additional options for `flutter build` command
+        type: string
+      xcode-version:
+        description: Xcode version
+        type: string
+        default: '26.0'
+      export-options-plist-file:
+        description: Path to the export options plist file
+        type: string
+        default: ios/ExportOptions.plist
+      asc-key-file-path:
+        description: Path to place the App Store Connect API Key .p8 file
+        type: string
+        default: ios/secrets/ASC_AuthKey.p8
+    secrets:
+      provisioning_profile_1_base64:
+        description: Base64 encoded provisioning profile for App
+        required: true
+      provisioning_profile_2_base64:
+        description: Base64 encoded additional provisioning profile for App Widgets etc.
+        required: false
+      codesign_cert_base64:
+        description: Base64 encoded .p12 file for code signing
+        required: true
+      codesign_cert_pw:
+        description: Password for the .p12 file
+        required: true
+      google_service_info_plist_base64:
+        description: Base64 encoded GoogleService-Info.plist
+        required: false
+      asc_key_id:
+        description: App Store Connect API Key ID
+        required: true
+      asc_issuer_id:
+        description: App Store Connect API Key Issuer ID
+        required: true
+      asc_key_base64:
+        description: Base64 encoded App Store Connect API Key .p8 file
+        required: true
+
+jobs:
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set Xcode to ${{ inputs.xcode-version }}
+        run: sudo xcode-select -s /Applications/Xcode_${{ inputs.xcode-version }}.app/Contents/Developer
+
+      - name: Init Flutter SDK
+        uses: chika3742/setup-fvm@v3
+
+      - name: Import Provisioning Profiles
+        run: |
+          mkdir -p "~/Library/MobileDevice/Provisioning Profiles"
+          base64 -d <<< "${{ secrets.provisioning_profile_1_base64 }}" > "~/Library/MobileDevice/Provisioning Profiles/Profile1.mobileprovision"
+          if [ -n "${{ secrets.provisioning_profile_2_base64 }}" ]; then
+              base64 -d <<< "${{ secrets.provisioning_profile_2_base64 }}" > "~/Library/MobileDevice/Provisioning Profiles/Profile2.mobileprovision"
+          fi
+
+      - name: Import Certificates
+        uses: Apple-Actions/import-codesign-certs@v5
+        with:
+          p12-file-base64: ${{ secrets.codesign_cert_base64 }}
+          p12-password: ${{ secrets.codesign_cert_pw }}
+
+      - name: Import GoogleService-Info.plist
+        if: ${{ secrets.google_service_info_plist_base64 != '' }}
+        run: base64 -d <<< "${{ secrets.google_service_info_plist_base64 }}" > ./Runner/GoogleService-Info.plist
+
+      - name: Build iOS
+        run: |
+          fvm flutter build ipa\
+            --build-number ${{ inputs.build-number }}\
+            --build-name ${{ inputs.build-name }}\
+            --export-options-plist ${{ inputs.export-options-plist-file }}\
+            ${{ inputs.build-options }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: ./build/ios/ipa/*.ipa
+
+  deploy-ios:
+    name: Deploy iOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v5
+
+      - uses: ruby/setup-ruby@v1 # for fastlane
+
+      - name: Install Fastlane
+        run: bundle install
+
+      - name: Import ASC Key
+        run: |
+          mkdir -p $(dirname ${{ inputs.asc-key-file-path }})
+          base64 -d <<< "${{ secrets.asc_key_base64 }}" > ${{ inputs.asc-key-file-path }}
+
+      - name: Deploy to TestFlight
+        working-directory: ios
+        env:
+          ASC_KEY_ID: ${{ secrets.asc_key_id }}
+          ASC_ISSUER_ID: ${{ secrets.asc_issuer_id }}
+        run: bundle exec fastlane upload
+
+      - name: Delete ASC Key
+        if: always()
+        run: rm -f ${{ inputs.asc-key-file-path }}
