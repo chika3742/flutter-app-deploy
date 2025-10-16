@@ -78,7 +78,7 @@ jobs:
           p12-password: ${{ secrets.codesign_cert_pw }}
 
       - name: Import GoogleService-Info.plist
-        if: ${{ secrets.google_service_info_plist_base64 != '' }}
+        if: secrets.google_service_info_plist_base64 != ''
         run: base64 -d <<< "${{ secrets.google_service_info_plist_base64 }}" > ./Runner/GoogleService-Info.plist
 
       - name: Build iOS
