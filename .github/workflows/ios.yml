@@ -93,12 +93,13 @@ jobs:
           fvm flutter build ipa\
             --build-number ${{ inputs.build-number }}\
             --build-name=${{ inputs.build-name }}\
-            --export-options-plist=${{ inputs.export-options-plist-file }}\
+            --export-options-plist="${{ inputs.export-options-plist-file }}"\
             ${{ inputs.build-options }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
+          name: ios-build
           path: ./build/ios/ipa/*.ipa
 
   deploy-ios:
@@ -110,6 +111,8 @@ jobs:
 
       - name: Download Artifact
         uses: actions/download-artifact@v5
+        with:
+          name: ios-build
 
       - uses: ruby/setup-ruby@v1 # for fastlane
         with:

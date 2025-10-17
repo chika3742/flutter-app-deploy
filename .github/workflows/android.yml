@@ -84,6 +84,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
+          name: android-build
           path: |
             ./build/app/outputs/bundle/release/app-release.aab
             ./build/app/intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib/**
@@ -107,6 +108,8 @@ jobs:
 
       - name: Download Artifact
         uses: actions/download-artifact@v5
+        with:
+          name: android-build
 
       - uses: ruby/setup-ruby@v1 # for fastlane
         with:
