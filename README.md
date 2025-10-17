@@ -89,6 +89,9 @@ on:
 jobs:
   deploy:
     uses: chika3742/flutter-app-deploy/.github/workflows/android.yml@main
+    permissions:
+      contents: read
+      id-token: write
     with:
       build-number: '1'
       build-name: '1.0.0'
