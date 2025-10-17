@@ -110,6 +110,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: android-build
+          path: ./build/app
 
       - uses: ruby/setup-ruby@v1 # for fastlane
         with:
