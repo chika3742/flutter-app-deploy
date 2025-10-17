@@ -69,7 +69,7 @@ jobs:
 
       - name: Import Provisioning Profiles
         run: |
-          provision_dir="~/Library/Xcode/UserData/Provisioning Profiles"
+          provision_dir=~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p "$provision_dir"
           base64 -d <<< "${{ secrets.provisioning_profile_1_base64 }}" > "$provision_dir/Profile1.mobileprovision"
           if [ -n "${{ secrets.provisioning_profile_2_base64 }}" ]; then
