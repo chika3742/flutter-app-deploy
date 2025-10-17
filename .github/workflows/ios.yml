@@ -92,8 +92,8 @@ jobs:
         run: |
           fvm flutter build ipa\
             --build-number ${{ inputs.build-number }}\
-            --build-name ${{ inputs.build-name }}\
-            --export-options-plist ${{ inputs.export-options-plist-file }}\
+            --build-name=${{ inputs.build-name }}\
+            --export-options-plist=${{ inputs.export-options-plist-file }}\
             ${{ inputs.build-options }}
 
       - name: Upload Artifact

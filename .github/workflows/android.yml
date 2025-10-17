@@ -78,7 +78,7 @@ jobs:
         run: |
           fvm flutter build appbundle\
             --build-number ${{ inputs.build-number }}\
-            --build-name ${{ inputs.build-name }}\
+            --build-name=${{ inputs.build-name }}\
             ${{ inputs.build-options }}
 
       - name: Upload Artifact
