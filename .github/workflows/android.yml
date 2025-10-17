@@ -64,8 +64,8 @@ jobs:
 
       - name: Import Secrets
         run: |
-          base64 -d <<< "${{ secrets.android_keystore_base64 }}" > ./${{ inputs.keystore-file }}
-          base64 -d <<< "${{ secrets.android_key_properties_base64 }}" > ./${{ inputs.key_properties_file }}
+          base64 -d <<< "${{ secrets.keystore_base64 }}" > ./${{ inputs.keystore-file }}
+          base64 -d <<< "${{ secrets.key_properties_base64 }}" > ./${{ inputs.key-properties-file }}
           if [ -n "${{ secrets.google_services_json_base64 }}" ]; then
             base64 -d <<< "${{ secrets.google_services_json_base64 }}" > ./android/app/google-services.json
           fi
@@ -89,7 +89,7 @@ jobs:
         if: always()
         run: |
           rm -f "./${{ inputs.keystore-file }}" \
-                "./${{ inputs.key_properties_file }}"
+                "./${{ inputs.key-properties-file }}"
 
   deploy-android:
     name: Deploy Android
