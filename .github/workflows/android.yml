@@ -21,6 +21,10 @@ on:
         description: Java version for build
         type: string
         default: '17'
+      ruby-version:
+        description: Ruby version for installing fastlane
+        type: string
+        default: '3.4'
       build-options:
         description: Additional options for `flutter build` command
         type: string
@@ -102,6 +106,8 @@ jobs:
         uses: actions/download-artifact@v5
 
       - uses: ruby/setup-ruby@v1 # for fastlane
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
 
       - name: Install Fastlane
         run: bundle install

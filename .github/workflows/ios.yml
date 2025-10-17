@@ -16,6 +16,10 @@ on:
         description: Xcode version
         type: string
         default: '26.0'
+      ruby-version:
+        description: Ruby version for installing fastlane
+        type: string
+        default: '3.4'
       export-options-plist-file:
         description: Path to the export options plist file
         type: string
@@ -108,6 +112,8 @@ jobs:
         uses: actions/download-artifact@v5
 
       - uses: ruby/setup-ruby@v1 # for fastlane
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
 
       - name: Install Fastlane
         run: bundle install
