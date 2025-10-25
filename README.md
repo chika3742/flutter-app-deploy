@@ -40,8 +40,6 @@ project-root/
 | key-properties-file | Path to the signing config .properties file    |          | android/key.properties |
 | java-version        | Java version                                   |          | 17                     |
 | build-options       | Additional options for `flutter build` command |          | ''                     |
-| wif-provider        | Workload Identity Federation Provider          | Yes      | -                      |
-| wif-service-account | Workload Identity Federation Service Account   | Yes      | -                      |
 | wif-audience        | Workload Identity Federation Audience          |          | -                      |
 
 ### iOS Workflow (.github/workflows/ios.yml)
@@ -64,6 +62,8 @@ project-root/
 | keystore_base64             | Base64 encoded keystore file                   | Yes      |
 | key_properties_base64       | Base64 encoded signing config .properties file | Yes      |
 | google_services_json_base64 | Base64 encoded google-services.json            |          |
+| wif_provider                | Workload Identity Federation provider ID       | Yes      |
+| wif_service_account         | Workload Identity Federation service account   | Yes      |
 
 ### iOS
 
@@ -95,11 +95,11 @@ jobs:
     with:
       build-number: '1'
       build-name: '1.0.0'
-      wif-provider: ${{ secrets.WIF_PROVIDER }}
-      wif-service-account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
     secrets:
       keystore_base64: ${{ secrets.KEYSTORE_BASE64 }}
       key_properties_base64: ${{ secrets.KEY_PROPERTIES_BASE64 }}
+      wif_provider: ${{ secrets.WIF_PROVIDER }}
+      wif_service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 ```
 
 ## License

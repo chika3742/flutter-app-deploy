@@ -29,14 +29,6 @@ on:
         description: Additional options for `flutter build` command
         type: string
         default: ''
-      wif-provider:
-        description: Workload Identity Federation Provider
-        type: string
-        required: true
-      wif-service-account:
-        description: Workload Identity Federation Service Account
-        type: string
-        required: true
       wif-audience:
         description: Workload Identity Federation Audience
         type: string
@@ -50,6 +42,12 @@ on:
       google_services_json_base64:
         description: Base64 encoded google-services.json
         required: false
+      wif_provider:
+        description: Workload Identity Federation provider ID
+        required: true
+      wif_service_account:
+        description: Workload Identity Federation service account
+        required: true
 
 jobs:
   build-android:
