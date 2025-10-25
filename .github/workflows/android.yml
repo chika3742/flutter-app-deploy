@@ -120,8 +120,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          workload_identity_provider: ${{ inputs.wif-provider }}
-          service_account: ${{ inputs.wif-service-account }}
+          workload_identity_provider: ${{ secrets.wif_provider }}
+          service_account: ${{ secrets.wif_service_account }}
           audience: ${{ inputs.wif-audience }}
 
       - name: Deploy to Play Store
