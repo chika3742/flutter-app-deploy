@@ -54,7 +54,7 @@ jobs:
     name: Build Android
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Init Flutter SDK
         uses: chika3742/setup-fvm@v3
@@ -102,7 +102,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Download Artifact
         uses: actions/download-artifact@v5
