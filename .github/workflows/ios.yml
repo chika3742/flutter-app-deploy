@@ -77,7 +77,7 @@ jobs:
           fi
 
       - name: Import Certificates
-        uses: Apple-Actions/import-codesign-certs@v5
+        uses: Apple-Actions/import-codesign-certs@v6
         with:
           p12-file-base64: ${{ secrets.codesign_cert_base64 }}
           p12-password: ${{ secrets.codesign_cert_pw }}
