@@ -48,6 +48,9 @@ on:
       wif_service_account:
         description: Workload Identity Federation service account
         required: true
+      dotenv_base64:
+        description: Base64 encoded .env file
+        required: false
 
 jobs:
   build-android:
@@ -70,6 +73,9 @@ jobs:
           base64 -d <<< "${{ secrets.key_properties_base64 }}" > ./${{ inputs.key-properties-file }}
           if [ -n "${{ secrets.google_services_json_base64 }}" ]; then
             base64 -d <<< "${{ secrets.google_services_json_base64 }}" > ./android/app/google-services.json
+          fi
+          if [ -n "${{ secrets.dotenv_base64 }}" ]; then
+            base64 -d <<< "${{ secrets.dotenv_base64 }}" > ./.env
           fi
 
       - name: Build

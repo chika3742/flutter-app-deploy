@@ -53,6 +53,9 @@ on:
       asc_key_base64:
         description: Base64 encoded App Store Connect API Key .p8 file
         required: true
+      dotenv_base64:
+        description: Base64 encoded .env file
+        required: false
 
 jobs:
   build-ios:
@@ -67,13 +70,16 @@ jobs:
       - name: Init Flutter SDK
         uses: chika3742/setup-fvm@v3
 
-      - name: Import Provisioning Profiles
+      - name: Import Provisioning Profiles and .env
         run: |
           provision_dir=~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p "$provision_dir"
           base64 -d <<< "${{ secrets.provisioning_profile_1_base64 }}" > "$provision_dir/Profile1.mobileprovision"
           if [ -n "${{ secrets.provisioning_profile_2_base64 }}" ]; then
               base64 -d <<< "${{ secrets.provisioning_profile_2_base64 }}" > "$provision_dir/Profile2.mobileprovision"
+          fi
+          if [ -n "${{ secrets.dotenv_base64 }}" ]; then
+            base64 -d <<< "${{ secrets.dotenv_base64 }}" > ./.env
           fi
 
       - name: Import Certificates

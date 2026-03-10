@@ -64,6 +64,7 @@ project-root/
 | google_services_json_base64 | Base64 encoded google-services.json            |          |
 | wif_provider                | Workload Identity Federation provider ID       | Yes      |
 | wif_service_account         | Workload Identity Federation service account   | Yes      |
+| dotenv_base64               | Base64 encoded .env file                       |          |
 
 ### iOS
 
@@ -77,6 +78,7 @@ project-root/
 | asc_key_id                       | App Store Connect API Key ID                      | Yes      |
 | asc_issuer_id                    | App Store Connect API Key Issuer ID               | Yes      |
 | asc_key_base64                   | Base64 encoded App Store Connect API Key .p8 file |          |
+| dotenv_base64                    | Base64 encoded .env file                          |          |
 
 ## Usage Example
 
