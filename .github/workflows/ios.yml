@@ -138,6 +138,7 @@ jobs:
         env:
           ASC_KEY_ID: ${{ secrets.asc_key_id }}
           ASC_ISSUER_ID: ${{ secrets.asc_issuer_id }}
+          ASC_KEY_FILEPATH: ${{ inputs.asc-key-file-path }}
         run: bundle exec fastlane upload
 
       - name: Delete ASC Key
