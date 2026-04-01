@@ -56,6 +56,11 @@ on:
       dotenv_base64:
         description: Base64 encoded .env file
         required: false
+      info_plist_config_base64:
+        description: |
+          Base64 encoded .xcconfig file to inject variables into Info.plist. The file will be placed to
+          ios/Runner/InfoPlist.xcconfig.
+        required: false
 
 jobs:
   build-ios:
@@ -70,7 +75,7 @@ jobs:
       - name: Init Flutter SDK
         uses: chika3742/setup-fvm@v3
 
-      - name: Import Provisioning Profiles and .env
+      - name: Import Provisioning Profiles, .env, and InfoPlist.xcconfig
         run: |
           provision_dir=~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p "$provision_dir"
@@ -80,6 +85,9 @@ jobs:
           fi
           if [ -n "${{ secrets.dotenv_base64 }}" ]; then
             base64 -d <<< "${{ secrets.dotenv_base64 }}" > ./.env
+          fi
+          if [ -n "${{ secrets.info_plist_config_base64 }}" ]; then
+            base64 -d <<< "${{ secrets.info_plist_config_base64 }}" > ./ios/Runner/InfoPlist.xcconfig
           fi
 
       - name: Import Certificates
