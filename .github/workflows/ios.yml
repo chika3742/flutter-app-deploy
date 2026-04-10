@@ -25,9 +25,9 @@ on:
         type: string
         default: ios/ExportOptions.plist
       asc-key-file-path:
-        description: Path to place the App Store Connect API Key .p8 file
+        description: Path to place the App Store Connect API Key .p8 file relative to (project root)/ios
         type: string
-        default: ios/secrets/ASC_AuthKey.p8
+        default: secrets/ASC_AuthKey.p8
     secrets:
       provisioning_profile_1_base64:
         description: Base64 encoded provisioning profile for App
