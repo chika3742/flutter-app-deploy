@@ -25,7 +25,7 @@ on:
         type: string
         default: ios/ExportOptions.plist
       asc-key-file-path:
-        description: Path to place the App Store Connect API Key .p8 file relative to (project root)/ios
+        description: Path to place the App Store Connect API Key .p8 file relative to <project root>/ios
         type: string
         default: secrets/ASC_AuthKey.p8
     secrets:
@@ -137,6 +137,7 @@ jobs:
         run: bundle install
 
       - name: Import ASC Key
+        working-directory: ios
         run: |
           mkdir -p $(dirname ${{ inputs.asc-key-file-path }})
           base64 -d <<< "${{ secrets.asc_key_base64 }}" > ${{ inputs.asc-key-file-path }}
