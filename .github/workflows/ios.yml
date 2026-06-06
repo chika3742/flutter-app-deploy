@@ -70,24 +70,31 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Set Xcode to ${{ inputs.xcode-version }}
-        run: sudo xcode-select -s /Applications/Xcode_${{ inputs.xcode-version }}.app/Contents/Developer
+        env:
+          XCODE_VERSION: ${{ inputs.xcode-version }}
+        run: sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app/Contents/Developer"
 
       - name: Init Flutter SDK
         uses: chika3742/setup-fvm@v3
 
       - name: Import Provisioning Profiles, .env, and InfoPlist.xcconfig
+        env:
+          PROVISIONING_PROFILE_1_BASE64: ${{ secrets.provisioning_profile_1_base64 }}
+          PROVISIONING_PROFILE_2_BASE64: ${{ secrets.provisioning_profile_2_base64 }}
+          DOTENV_BASE64: ${{ secrets.dotenv_base64 }}
+          INFO_PLIST_CONFIG_BASE64: ${{ secrets.info_plist_config_base64 }}
         run: |
           provision_dir=~/Library/MobileDevice/Provisioning\ Profiles
           mkdir -p "$provision_dir"
-          base64 -d <<< "${{ secrets.provisioning_profile_1_base64 }}" > "$provision_dir/Profile1.mobileprovision"
-          if [ -n "${{ secrets.provisioning_profile_2_base64 }}" ]; then
-              base64 -d <<< "${{ secrets.provisioning_profile_2_base64 }}" > "$provision_dir/Profile2.mobileprovision"
+          base64 -d <<< "$PROVISIONING_PROFILE_1_BASE64" > "$provision_dir/Profile1.mobileprovision"
+          if [ -n "$PROVISIONING_PROFILE_2_BASE64" ]; then
+              base64 -d <<< "$PROVISIONING_PROFILE_2_BASE64" > "$provision_dir/Profile2.mobileprovision"
           fi
-          if [ -n "${{ secrets.dotenv_base64 }}" ]; then
-            base64 -d <<< "${{ secrets.dotenv_base64 }}" > ./.env
+          if [ -n "$DOTENV_BASE64" ]; then
+            base64 -d <<< "$DOTENV_BASE64" > ./.env
           fi
-          if [ -n "${{ secrets.info_plist_config_base64 }}" ]; then
-            base64 -d <<< "${{ secrets.info_plist_config_base64 }}" > ./ios/Runner/InfoPlist.xcconfig
+          if [ -n "$INFO_PLIST_CONFIG_BASE64" ]; then
+            base64 -d <<< "$INFO_PLIST_CONFIG_BASE64" > ./ios/Runner/InfoPlist.xcconfig
           fi
 
       - name: Import Certificates
@@ -97,18 +104,26 @@ jobs:
           p12-password: ${{ secrets.codesign_cert_pw }}
 
       - name: Import GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.google_service_info_plist_base64 }}
         run: |
-          if [ -n "${{ secrets.google_service_info_plist_base64 }}" ]; then
-            base64 -d <<< "${{ secrets.google_service_info_plist_base64 }}" > ./ios/Runner/GoogleService-Info.plist
+          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            base64 -d <<< "$GOOGLE_SERVICE_INFO_PLIST_BASE64" > ./ios/Runner/GoogleService-Info.plist
           fi
 
       - name: Build iOS
+        shell: bash
+        env:
+          BUILD_NUMBER: ${{ inputs.build-number }}
+          BUILD_NAME: ${{ inputs.build-name }}
+          EXPORT_OPTIONS_PLIST_FILE: ${{ inputs.export-options-plist-file }}
+          BUILD_OPTIONS: ${{ inputs.build-options }}
         run: |
           fvm flutter build ipa\
-            --build-number ${{ inputs.build-number }}\
-            --build-name=${{ inputs.build-name }}\
-            --export-options-plist="${{ inputs.export-options-plist-file }}"\
-            ${{ inputs.build-options }}
+            --build-number "$BUILD_NUMBER"\
+            --build-name="$BUILD_NAME"\
+            --export-options-plist="$EXPORT_OPTIONS_PLIST_FILE"\
+            $BUILD_OPTIONS
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v6
@@ -138,9 +153,12 @@ jobs:
 
       - name: Import ASC Key
         working-directory: ios
+        env:
+          ASC_KEY_BASE64: ${{ secrets.asc_key_base64 }}
+          ASC_KEY_FILE_PATH: ${{ inputs.asc-key-file-path }}
         run: |
-          mkdir -p $(dirname ${{ inputs.asc-key-file-path }})
-          base64 -d <<< "${{ secrets.asc_key_base64 }}" > ${{ inputs.asc-key-file-path }}
+          mkdir -p "$(dirname "$ASC_KEY_FILE_PATH")"
+          base64 -d <<< "$ASC_KEY_BASE64" > "$ASC_KEY_FILE_PATH"
 
       - name: Deploy to TestFlight
         working-directory: ios
@@ -152,4 +170,6 @@ jobs:
 
       - name: Delete ASC Key
         if: always()
-        run: rm -f ${{ inputs.asc-key-file-path }}
+        env:
+          ASC_KEY_FILE_PATH: ${{ inputs.asc-key-file-path }}
+        run: rm -f "$ASC_KEY_FILE_PATH"

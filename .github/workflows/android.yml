@@ -68,22 +68,34 @@ jobs:
           java-version: ${{ inputs.java-version }}
 
       - name: Import Secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.keystore_base64 }}
+          KEY_PROPERTIES_BASE64: ${{ secrets.key_properties_base64 }}
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.google_services_json_base64 }}
+          DOTENV_BASE64: ${{ secrets.dotenv_base64 }}
+          KEYSTORE_FILE: ${{ inputs.keystore-file }}
+          KEY_PROPERTIES_FILE: ${{ inputs.key-properties-file }}
         run: |
-          base64 -d <<< "${{ secrets.keystore_base64 }}" > ./${{ inputs.keystore-file }}
-          base64 -d <<< "${{ secrets.key_properties_base64 }}" > ./${{ inputs.key-properties-file }}
-          if [ -n "${{ secrets.google_services_json_base64 }}" ]; then
-            base64 -d <<< "${{ secrets.google_services_json_base64 }}" > ./android/app/google-services.json
+          base64 -d <<< "$KEYSTORE_BASE64" > "./$KEYSTORE_FILE"
+          base64 -d <<< "$KEY_PROPERTIES_BASE64" > "./$KEY_PROPERTIES_FILE"
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            base64 -d <<< "$GOOGLE_SERVICES_JSON_BASE64" > ./android/app/google-services.json
           fi
-          if [ -n "${{ secrets.dotenv_base64 }}" ]; then
-            base64 -d <<< "${{ secrets.dotenv_base64 }}" > ./.env
+          if [ -n "$DOTENV_BASE64" ]; then
+            base64 -d <<< "$DOTENV_BASE64" > ./.env
           fi
 
       - name: Build
+        shell: bash
+        env:
+          BUILD_NUMBER: ${{ inputs.build-number }}
+          BUILD_NAME: ${{ inputs.build-name }}
+          BUILD_OPTIONS: ${{ inputs.build-options }}
         run: |
           fvm flutter build appbundle\
-            --build-number ${{ inputs.build-number }}\
-            --build-name=${{ inputs.build-name }}\
-            ${{ inputs.build-options }}
+            --build-number "$BUILD_NUMBER"\
+            --build-name="$BUILD_NAME"\
+            $BUILD_OPTIONS
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v6
@@ -96,9 +108,12 @@ jobs:
 
       - name: Delete Secrets
         if: always()
+        env:
+          KEYSTORE_FILE: ${{ inputs.keystore-file }}
+          KEY_PROPERTIES_FILE: ${{ inputs.key-properties-file }}
         run: |
-          rm -f "./${{ inputs.keystore-file }}" \
-                "./${{ inputs.key-properties-file }}"
+          rm -f "./$KEYSTORE_FILE" \
+                "./$KEY_PROPERTIES_FILE"
 
   deploy-android:
     name: Deploy Android
