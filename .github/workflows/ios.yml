@@ -66,8 +66,12 @@ jobs:
   build-ios:
     name: Build iOS
     runs-on: macos-26
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set Xcode to ${{ inputs.xcode-version }}
         env:
@@ -135,8 +139,12 @@ jobs:
     name: Deploy iOS
     needs: build-ios
     runs-on: macos-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Download Artifact
         uses: actions/download-artifact@v7
