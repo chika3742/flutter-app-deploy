@@ -171,6 +171,7 @@ jobs:
       - name: Deploy to TestFlight
         working-directory: ios
         env:
+          APP_VERSION: ${{ inputs.build-name }}
           ASC_KEY_ID: ${{ secrets.asc_key_id }}
           ASC_ISSUER_ID: ${{ secrets.asc_issuer_id }}
           ASC_KEY_FILEPATH: ${{ inputs.asc-key-file-path }}

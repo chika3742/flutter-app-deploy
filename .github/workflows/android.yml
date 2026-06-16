@@ -154,3 +154,5 @@ jobs:
       - name: Deploy to Play Store
         working-directory: android
         run: bundle exec fastlane upload
+        env:
+          APP_VERSION: ${{ inputs.build-name }}
