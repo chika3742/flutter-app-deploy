@@ -1,0 +1,181 @@
+on:
+  workflow_call:
+    inputs:
+      build-number:
+        description: Build number for build
+        type: string
+        required: true
+      build-name:
+        description: Build name for build
+        type: string
+        required: true
+      build-options:
+        description: Additional options for `flutter build` command
+        type: string
+      xcode-version:
+        description: Xcode version
+        type: string
+        default: '26.0'
+      ruby-version:
+        description: Ruby version for installing fastlane
+        type: string
+        default: '3.4'
+      export-options-plist-file:
+        description: Path to the export options plist file
+        type: string
+        default: ios/ExportOptions.plist
+      asc-key-file-path:
+        description: Path to place the App Store Connect API Key .p8 file relative to <project root>/ios
+        type: string
+        default: secrets/ASC_AuthKey.p8
+    secrets:
+      match_passphrase:
+        description: Fastlane Match repo encryption passphrase
+        required: true
+      match_git_basic_auth:
+        description: GitHub PAT to access the secret repository
+        required: true
+      google_service_info_plist_base64:
+        description: Base64 encoded GoogleService-Info.plist
+        required: false
+      asc_key_id:
+        description: App Store Connect API Key ID
+        required: true
+      asc_issuer_id:
+        description: App Store Connect API Key Issuer ID
+        required: true
+      asc_key_base64:
+        description: Base64 encoded App Store Connect API Key .p8 file
+        required: true
+      dotenv_base64:
+        description: Base64 encoded .env file
+        required: false
+      info_plist_config_base64:
+        description: |
+          Base64 encoded .xcconfig file to inject variables into Info.plist. The file will be placed to
+          ios/Runner/InfoPlist.xcconfig.
+        required: false
+
+jobs:
+  build-ios:
+    name: Build iOS
+    runs-on: macos-26
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set Xcode to ${{ inputs.xcode-version }}
+        env:
+          XCODE_VERSION: ${{ inputs.xcode-version }}
+        run: sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app/Contents/Developer"
+
+      - name: Init Flutter SDK
+        uses: chika3742/setup-fvm@v3
+
+      - uses: ruby/setup-ruby@v1 # for fastlane
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: bundle install
+
+      - name: Run Fastlane Match
+        working-directory: ios
+        env:
+          MATCH_PASSWORD: ${{ secrets.match_passphrase }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.match_git_basic_auth }}
+        run: |
+          bundle exec fastlane match appstore --readonly
+
+      - name: Import .env, and InfoPlist.xcconfig
+        env:
+          DOTENV_BASE64: ${{ secrets.dotenv_base64 }}
+          INFO_PLIST_CONFIG_BASE64: ${{ secrets.info_plist_config_base64 }}
+        run: |
+          if [ -n "$DOTENV_BASE64" ]; then
+            base64 -d <<< "$DOTENV_BASE64" > ./.env
+          fi
+          if [ -n "$INFO_PLIST_CONFIG_BASE64" ]; then
+            base64 -d <<< "$INFO_PLIST_CONFIG_BASE64" > ./ios/Runner/InfoPlist.xcconfig
+          fi
+
+      - name: Import GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.google_service_info_plist_base64 }}
+        run: |
+          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            base64 -d <<< "$GOOGLE_SERVICE_INFO_PLIST_BASE64" > ./ios/Runner/GoogleService-Info.plist
+          fi
+
+      - name: Build iOS
+        shell: bash
+        env:
+          BUILD_NUMBER: ${{ inputs.build-number }}
+          BUILD_NAME: ${{ inputs.build-name }}
+          EXPORT_OPTIONS_PLIST_FILE: ${{ inputs.export-options-plist-file }}
+          BUILD_OPTIONS: ${{ inputs.build-options }}
+        run: |
+          fvm flutter build ipa\
+            --build-number "$BUILD_NUMBER"\
+            --build-name="$BUILD_NAME"\
+            --export-options-plist="$EXPORT_OPTIONS_PLIST_FILE"\
+            $BUILD_OPTIONS
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ios-build
+          path: ./build/ios/ipa/*.ipa
+
+  deploy-ios:
+    name: Deploy iOS
+    needs: build-ios
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: ios-build
+          path: build/ios/ipa
+
+      - uses: ruby/setup-ruby@v1 # for fastlane
+        with:
+          ruby-version: ${{ inputs.ruby-version }}
+          bundler-cache: true
+
+      - name: Install Fastlane
+        run: bundle install
+
+      - name: Import ASC Key
+        working-directory: ios
+        env:
+          ASC_KEY_BASE64: ${{ secrets.asc_key_base64 }}
+          ASC_KEY_FILE_PATH: ${{ inputs.asc-key-file-path }}
+        run: |
+          mkdir -p "$(dirname "$ASC_KEY_FILE_PATH")"
+          base64 -d <<< "$ASC_KEY_BASE64" > "$ASC_KEY_FILE_PATH"
+
+      - name: Deploy to TestFlight
+        working-directory: ios
+        env:
+          APP_VERSION: ${{ inputs.build-name }}
+          ASC_KEY_ID: ${{ secrets.asc_key_id }}
+          ASC_ISSUER_ID: ${{ secrets.asc_issuer_id }}
+          ASC_KEY_FILEPATH: ${{ inputs.asc-key-file-path }}
+        run: bundle exec fastlane upload
+
+      - name: Delete ASC Key
+        if: always()
+        env:
+          ASC_KEY_FILE_PATH: ${{ inputs.asc-key-file-path }}
+        run: rm -f "$ASC_KEY_FILE_PATH"
