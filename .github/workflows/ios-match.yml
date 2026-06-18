@@ -28,6 +28,10 @@ on:
         description: Path to place the App Store Connect API Key .p8 file relative to <project root>/ios
         type: string
         default: secrets/ASC_AuthKey.p8
+      setup-lane-name:
+        description: Fastlane lane name to install codesign and provisioning profiles
+        type: string
+        default: setup
     secrets:
       match_passphrase:
         description: Fastlane Match repo encryption passphrase
@@ -83,13 +87,14 @@ jobs:
       - name: Install Fastlane
         run: bundle install
 
-      - name: Run Fastlane Match
+      - name: Setup Codesign and Provisioning Profiles
         working-directory: ios
         env:
           MATCH_PASSWORD: ${{ secrets.match_passphrase }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.match_git_basic_auth }}
+          LANE_NAME: ${{ inputs.setup-lane-name }}
         run: |
-          bundle exec fastlane match appstore --readonly
+          bundle exec fastlane $LANE_NAME
 
       - name: Import .env, and InfoPlist.xcconfig
         env:
