@@ -9,6 +9,9 @@ on:
         description: Build name for build
         type: string
         required: true
+      deploy-channel:
+        description: Channel to deploy. Passed to the upload lane.
+        type: string
       keystore-file:
         description: Path to the keystore file
         type: string
@@ -156,3 +159,4 @@ jobs:
         run: bundle exec fastlane upload
         env:
           APP_VERSION: ${{ inputs.build-name }}
+          DEPLOY_VERSION: ${{ inputs.deploy-channel }}

@@ -9,6 +9,9 @@ on:
         description: Build name for build
         type: string
         required: true
+      deploy-channel:
+        description: Channel to deploy. Passed to the upload lane.
+        type: string
       build-options:
         description: Additional options for `flutter build` command
         type: string
@@ -177,6 +180,7 @@ jobs:
           ASC_KEY_ID: ${{ secrets.asc_key_id }}
           ASC_ISSUER_ID: ${{ secrets.asc_issuer_id }}
           ASC_KEY_FILEPATH: ${{ inputs.asc-key-file-path }}
+          DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
         run: bundle exec fastlane upload
 
       - name: Delete ASC Key
