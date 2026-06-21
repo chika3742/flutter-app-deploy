@@ -159,4 +159,4 @@ jobs:
         run: bundle exec fastlane upload
         env:
           APP_VERSION: ${{ inputs.build-name }}
-          DEPLOY_VERSION: ${{ inputs.deploy-channel }}
+          DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
