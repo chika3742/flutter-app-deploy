@@ -23,7 +23,7 @@ on:
       java-version:
         description: Java version for build
         type: string
-        default: '21'
+        default: '25'
       ruby-version:
         description: Ruby version for installing fastlane
         type: string
